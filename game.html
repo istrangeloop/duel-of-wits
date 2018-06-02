@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <script src="//cdn.jsdelivr.net/npm/phaser@3.0.0/dist/phaser.min.js"></script>
+    <title>
+        Duel of Wits
+    </title>
+</head>
+<body>
+    <script>
+    var config = {
+        type: Phaser.AUTO,
+        width: 600,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                drag: { y: 200, x: 200 }
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+    
+    var knights;
+    var cursors;
+    var game = new Phaser.Game(config);
+
+    function preload ()
+    {
+
+        this.load.image('board', 'assets/board.jpg');
+        this.load.image('archer', 'assets/archer.jpg');
+        this.load.image('knight', 'assets/knight.jpg');
+        this.load.image('arrow', 'assets/arrow.png');
+    }
+
+    function create ()
+    {
+        this.add.image(300, 300, 'board').setScale(1.5);
+        /* var particles = this.add.particles('red');
+
+        var emitter = particles.createEmitter({
+            speed: 500,
+            scale: { start: 1, end: 0 },
+            blendMode: 'ADD'
+        });
+        */
+
+
+        knights = this.add.group();
+        knights.create(225, 225, 'knight');
+        knights.create(225, 375, 'knight');
+        knights.create(375, 225, 'knight');
+        knights.create(375, 375, 'knight');
+
+        archer = this.physics.add.sprite(75, 535, 'archer');
+
+        cursors = this.input.keyboard.createCursorKeys();
+    }
+
+    function update ()
+    {
+        pawn = archer;
+
+        if(cursors.left.isDown){
+            this.tweens.add({
+            targets: pawn,
+                x: pawn.getCenter().x - 155,
+                duration: 1500,
+                delay: 500
+            });
+            //shootArrow();
+        }
+        else if(cursors.right.isDown){
+            this.tweens.add({
+            targets: pawn,
+                x: pawn.getCenter().x + 155,
+                duration: 1500,
+                delay: 1000
+            });
+            //shootArrow();
+        }
+        else if(cursors.up.isDown){
+            this.tweens.add({
+            targets: pawn,
+                y: pawn.getCenter().y - 155,
+                duration: 1500,
+                delay: 1000
+            });
+            //shootArrow();
+        }
+        else if(cursors.down.isDown){
+            this.tweens.add({
+            targets: pawn,
+                y: pawn.getCenter().y + 155,
+                duration: 1500,
+                delay: 1000
+            });
+            //shootArrow();
+        }
+    }
+
+    function shootArrow()
+    {
+        arrow = this.physics.add.sprite(archer.getCenter(), 'arrow');
+        arrow.setBounce(0, 0.2);
+        arrow.setCollideWorldBounds(false);
+
+        if (archer.rotation == 0){
+            this.tweens.add({
+            targets: arrow,
+                x: arrow.getCenter().x,
+                duration: 1500,
+                delay: 500
+            });
+            arrow.rotation = 0
+            arrow.setVelocity(160, 0);
+        }
+        else if (archer.rotation == Math.PI/2){
+            this.tweens.add({
+            targets: arrow,
+                y: arrow.getCenter().y,
+                duration: 1500,
+                delay: 500
+            });
+            arrow.rotation = Math.PI/2
+            arrow.setVelocity(0, 160);
+        }
+        else if (archer.rotation == Math.PI){
+            this.tweens.add({
+            targets: arrow,
+                x: arrow.getCenter().x,
+                duration: 1500,
+                delay: 500
+            });
+            arrow.rotation = Math.PI
+            arrow.setVelocity(-160, 0);
+        }
+        else if (archer.rotation == 3*Math.PI/2){
+            this.tweens.add({
+            targets: arrow,
+                x: arrow.getCenter().x,
+                duration: 1500,
+                delay: 500
+            });
+            arrow.rotation = 3*Math.PI/2
+            arrow.setVelocity(0, -160);
+        }
+    }
+
+</script>
+
+</body>
+</html>
