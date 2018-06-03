@@ -25,7 +25,14 @@
         }
     };
     
+    var GAME_SIZE = 600;
+    var SQUARE_CENTER = 55;
+    var SQUARE = 110;
+
     var knights;
+    var archer;
+    var mask;
+    var squares;
     var cursors;
     var game = new Phaser.Game(config);
 
@@ -36,119 +43,162 @@
         this.load.image('archer', 'assets/archer.jpg');
         this.load.image('knight', 'assets/knight.jpg');
         this.load.image('arrow', 'assets/arrow.png');
+        this.load.image('mask', 'assets/selection.png');
     }
 
     function create ()
     {
         this.add.image(300, 300, 'board').setScale(1.5);
-        /* var particles = this.add.particles('red');
 
-        var emitter = particles.createEmitter({
-            speed: 500,
-            scale: { start: 1, end: 0 },
-            blendMode: 'ADD'
-        });
-        */
-
-
-        knights = this.add.group();
+        knights = this.physics.add.group();
         knights.create(225, 225, 'knight');
         knights.create(225, 375, 'knight');
         knights.create(375, 225, 'knight');
         knights.create(375, 375, 'knight');
 
-        archer = this.physics.add.sprite(75, 535, 'archer');
+        archer = this.physics.add.sprite(SQUARE_CENTER, 4 * SQUARE +  SQUARE_CENTER, 'archer');
+        archer.setCollideWorldBounds(true);
+        this.physics.add.collider(archer, knights);
+
+        mask = this.physics.add.sprite(SQUARE_CENTER, 4 * SQUARE + SQUARE_CENTER, 'mask');
+        mask.setCollideWorldBounds(true);
 
         cursors = this.input.keyboard.createCursorKeys();
+        selbutton = this.input.keyboard.addKey(Phaser.Input.Keyboard.SPACEBAR);
     }
 
     function update ()
     {
-        pawn = archer;
-
-        if(cursors.left.isDown){
-            this.tweens.add({
-            targets: pawn,
-                x: pawn.getCenter().x - 155,
-                duration: 1500,
-                delay: 500
-            });
-            //shootArrow();
-        }
-        else if(cursors.right.isDown){
-            this.tweens.add({
-            targets: pawn,
-                x: pawn.getCenter().x + 155,
-                duration: 1500,
-                delay: 1000
-            });
-            //shootArrow();
-        }
-        else if(cursors.up.isDown){
-            this.tweens.add({
-            targets: pawn,
-                y: pawn.getCenter().y - 155,
-                duration: 1500,
-                delay: 1000
-            });
-            //shootArrow();
-        }
-        else if(cursors.down.isDown){
-            this.tweens.add({
-            targets: pawn,
-                y: pawn.getCenter().y + 155,
-                duration: 1500,
-                delay: 1000
-            });
-            //shootArrow();
+        pawn = selectPawn(this, mask, cursors, selbutton);
+        moveSelectedPawn(this, archer, cursors);
+        if (cursors.right.isDown){
+            shootArrow(this);
         }
     }
 
-    function shootArrow()
+    function moveSelectedPawn(obj, pawn, cursors){
+        if(cursors.left.isDown){
+            obj.tweens.add({
+            targets: pawn,
+                x: pawn.getCenter().x - SQUARE,
+                duration: 1500,
+            });
+        }
+        else if(cursors.right.isDown){
+            obj.tweens.add({
+            targets: pawn,
+                x: pawn.getCenter().x + SQUARE,
+                duration: 1500,
+            });
+        }
+        else if(cursors.up.isDown){
+            obj.tweens.add({
+            targets: pawn,
+                y: pawn.getCenter().y - SQUARE,
+                duration: 1500,
+            });
+        }
+        else if(cursors.down.isDown){
+            obj.tweens.add({
+            targets: pawn,
+                y: pawn.getCenter().y + SQUARE,
+                duration: 1500,
+            });
+        }
+    }
+
+    function selectPawn(obj, mask, cursors, selbutton){
+        if(cursors.left.isDown){
+            obj.tweens.add({
+            targets: mask,
+                x: (Math.round(mask.getCenter().x - SQUARE)/SQUARE)*SQUARE,
+                duration: 150,
+            });
+
+        }
+        else if(cursors.right.isDown){
+            obj.tweens.add({
+            targets: mask,
+                x: mask.getCenter().x + SQUARE,
+                x: (Math.round(mask.getCenter().x + SQUARE)/SQUARE)*SQUARE,
+                duration: 150,
+            });
+        }
+        else if(cursors.up.isDown){
+            obj.tweens.add({
+            targets: mask,
+                y: (Math.round(mask.getCenter().y - SQUARE)/SQUARE)*SQUARE,
+                duration: 150,
+            });
+        }
+        else if(cursors.down.isDown){
+            obj.tweens.add({
+            targets: mask,
+                y: (Math.round(mask.getCenter().y + SQUARE)/SQUARE)*SQUARE,
+                duration: 150,
+            });
+        }
+        if (selbutton.isDown){
+            return mask.getCenter();
+        }
+    }
+
+    function shootArrow(obj)
     {
-        arrow = this.physics.add.sprite(archer.getCenter(), 'arrow');
+        arrow = obj.physics.add.sprite(archer.getCenter().x, archer.getCenter().y, 'arrow');
         arrow.setBounce(0, 0.2);
         arrow.setCollideWorldBounds(false);
+        // obj.physics.add.overlap(arrow, knights);
+        obj.physics.add.collider(obj, arrow, knights, deflectArrow, null, obj);
 
         if (archer.rotation == 0){
-            this.tweens.add({
+            obj.tweens.add({
             targets: arrow,
-                x: arrow.getCenter().x,
+                x: arrow.getCenter().x + 50,
                 duration: 1500,
-                delay: 500
+                delay: 0
             });
-            arrow.rotation = 0
-            arrow.setVelocity(160, 0);
+            arrow.rotation = 0;
+            arrow.setVelocity(320, 0);
         }
         else if (archer.rotation == Math.PI/2){
-            this.tweens.add({
+            obj.tweens.add({
             targets: arrow,
-                y: arrow.getCenter().y,
+                y: arrow.getCenter().y + 150,
                 duration: 1500,
                 delay: 500
             });
-            arrow.rotation = Math.PI/2
+            arrow.rotation = Math.PI/2;
             arrow.setVelocity(0, 160);
         }
         else if (archer.rotation == Math.PI){
-            this.tweens.add({
+            obj.tweens.add({
             targets: arrow,
-                x: arrow.getCenter().x,
+                x: arrow.getCenter().x - 150,
                 duration: 1500,
                 delay: 500
             });
-            arrow.rotation = Math.PI
+            arrow.rotation = Math.PI;
             arrow.setVelocity(-160, 0);
         }
         else if (archer.rotation == 3*Math.PI/2){
-            this.tweens.add({
+            obj.tweens.add({
             targets: arrow,
-                x: arrow.getCenter().x,
+                y: arrow.getCenter().y - 150,
                 duration: 1500,
                 delay: 500
             });
-            arrow.rotation = 3*Math.PI/2
+            arrow.rotation = 3*Math.PI/2;
             arrow.setVelocity(0, -160);
+        }
+    }
+
+    function deflectArrow(obj, arrow, knight){
+        if (arrow.rotation != knight.rotation){
+            arrow.rotation = knight.rotation;
+        }
+        else {
+            arrow.rotation = knight.rotation + Math.PI/2;
         }
     }
 
