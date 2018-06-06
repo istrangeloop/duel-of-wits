@@ -26,13 +26,28 @@
     };
     
     var GAME_SIZE = 600;
-    var SQUARE_CENTER = 55;
-    var SQUARE = 110;
+    var SQUARE_CENTER = 75;
+    var SQUARE = 150;
+    
+    var game_over;
+    var player_turn;
+    var turnOK;
 
-    var knights;
+    var knight1;
+    var knight2;
+    var knight3;
+    var knight4;
     var archer;
+    var enemy;
     var mask;
-    var squares;
+    var grids = [[[75, 75], [225, 75], [375, 75], [550, 75]],
+    [[75, 225], [225, 225], [375, 225], [550, 225]],
+    [[75, 375], [225, 375], [375, 375], [550, 375]],
+    [[75, 550], [225, 550], [375, 550], [550, 550]]];
+    var mask_grid;
+    var pawn_grid;
+    var archer_grid;
+    var enemy_grid;
     var cursors;
     var game = new Phaser.Game(config);
 
@@ -50,29 +65,40 @@
     {
         this.add.image(300, 300, 'board').setScale(1.5);
 
-        knights = this.physics.add.group();
-        knights.create(225, 225, 'knight');
-        knights.create(225, 375, 'knight');
-        knights.create(375, 225, 'knight');
-        knights.create(375, 375, 'knight');
+        knight1 = this.physics.add.sprite(grids[2][2][0], grids[2][2][1], 'knight');
+        knight2 = this.physics.add.sprite(grids[2][1][0], grids[2][1][1], 'knight');
+        knight3 = this.physics.add.sprite(grids[1][2][0], grids[1][2][1], 'knight');
+        knight4 = this.physics.add.sprite(grids[1][1][0], grids[1][1][1], 'knight');
 
-        archer = this.physics.add.sprite(SQUARE_CENTER, 4 * SQUARE +  SQUARE_CENTER, 'archer');
+        archer = this.physics.add.sprite(grids[3][0][0], grids[3][0][1], 'archer');
         archer.setCollideWorldBounds(true);
-        this.physics.add.collider(archer, knights);
+        this.physics.add.collider(archer, knight1);
+        this.physics.add.collider(archer, knight2);
+        this.physics.add.collider(archer, knight3);
+        this.physics.add.collider(archer, knight4);
 
-        mask = this.physics.add.sprite(SQUARE_CENTER, 4 * SQUARE + SQUARE_CENTER, 'mask');
+        mask = this.physics.add.sprite(grids[0][0][0], grids[0][0][1], 'mask');
         mask.setCollideWorldBounds(true);
+        mask_grid = [grids[0][0][0], grids[0][0][1]];
 
         cursors = this.input.keyboard.createCursorKeys();
         selbutton = this.input.keyboard.addKey(Phaser.Input.Keyboard.SPACEBAR);
+        game_over = false;
+        player_turn = true;
+        turnOK = false;
     }
 
     function update ()
     {
-        pawn = selectPawn(this, mask, cursors, selbutton);
-        moveSelectedPawn(this, archer, cursors);
-        if (cursors.right.isDown){
-            shootArrow(this);
+        if(!game_over){
+            if(player_turn){
+                pawn = selectPawn(this, mask, cursors, selbutton);
+                if(turnOK){
+                    moveSelectedPawn(this, archer, cursors);
+                    shootArrow(this);
+                    player_turn = false;
+                }
+            }
         }
     }
 
@@ -108,38 +134,41 @@
     }
 
     function selectPawn(obj, mask, cursors, selbutton){
-        if(cursors.left.isDown){
+        
+        if(Phaser.Input.Keyboard.JustDown(cursors.left)){
             obj.tweens.add({
             targets: mask,
-                x: (Math.round(mask.getCenter().x - SQUARE)/SQUARE)*SQUARE,
+                x: (mask_grid[0] - SQUARE) % GAME_SIZE,
                 duration: 150,
             });
-
+            mask_grid[0] -= SQUARE;
         }
-        else if(cursors.right.isDown){
+        if(Phaser.Input.Keyboard.JustDown(cursors.right)){
             obj.tweens.add({
             targets: mask,
-                x: mask.getCenter().x + SQUARE,
-                x: (Math.round(mask.getCenter().x + SQUARE)/SQUARE)*SQUARE,
+                x: (mask_grid[0] + SQUARE) % GAME_SIZE,
                 duration: 150,
             });
+            mask_grid[0] += SQUARE;
         }
-        else if(cursors.up.isDown){
+        if(Phaser.Input.Keyboard.JustDown(cursors.up)){
             obj.tweens.add({
             targets: mask,
-                y: (Math.round(mask.getCenter().y - SQUARE)/SQUARE)*SQUARE,
+                y: (mask_grid[1] - SQUARE) % GAME_SIZE,
                 duration: 150,
             });
+            mask_grid[1] -= SQUARE;
         }
-        else if(cursors.down.isDown){
+        if(Phaser.Input.Keyboard.JustDown(cursors.down)){
             obj.tweens.add({
             targets: mask,
-                y: (Math.round(mask.getCenter().y + SQUARE)/SQUARE)*SQUARE,
+                y: (mask_grid[1] + SQUARE) % GAME_SIZE,
                 duration: 150,
             });
+            mask_grid[1] += SQUARE;
         }
         if (selbutton.isDown){
-            return mask.getCenter();
+            return mask_grid;
         }
     }
 
